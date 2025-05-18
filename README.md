@@ -1,4 +1,7 @@
 # todoList-front
+## 萌新学习前端完成的第一个项目
+使用vue 3,ant-design组件库完成
+目前将基础功能完成，后续会不断更新
 
 This template should help get you started developing with Vue 3 in Vite.
 
