@@ -1,86 +1,55 @@
 <script setup>
 import {ref,computed,watch} from 'vue'
 import {theme} from 'ant-design-vue'
+import TodoInput from "@/components/TodoInput.vue";
+import todoList from "@/components/todoList.vue"
+import ThemeToggle from "@/components/themeToggle.vue";
 const saveTodos=localStorage.getItem('todos')
 const todos=ref(saveTodos?JSON.parse(saveTodos):[]);
-const newTodo=ref('');
-const isDark=ref(false);
-function addTodo(){
-  if(newTodo.value.trim()==='') return;
-  todos.value.push({
-    text:newTodo.value.trim(),
-    completed:false,
-  })
-  newTodo.value='';
+const currentTheme=ref(localStorage.getItem('theme')==='dark'?
+theme.darkAlgorithm:theme.defaultAlgorithm)
+function addTodo(text){
+  todos.value.push({text,completed:false});
 }
 
-function deleteTodo(index){
+function toggleCompleted(index){
+  todos.value[index].completed=!todos.value[index].completed;
+}
+
+function removeTodo(index){
   todos.value.splice(index,1);
 }
 
-const completeCount=computed(()=>
-  todos.value.filter(todo=>todo.completed).length
-)
+const completedCount = computed(() => todos.value.filter(t => t.completed).length)
 
 watch(todos,(newTodo)=>{
   localStorage.setItem('todos',JSON.stringify(newTodo))
 },{deep:true})
 
-function switchMode(){
-  isDark.value=!isDark.value;
-}
 </script>
 
 <template>
-  <a-config-provider :theme="{ algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm }">
-    <a-button type="link" @click="switchMode">切换模式</a-button>
-    <a-typography class="container">
-      <a-typography-title>todolist</a-typography-title>
-      <div class="inputArea">
-        <a-input
-          v-model:value="newTodo"
-          placeholder="new todo"
-          show-count :maxlength="15"/>
+  <a-config-provider :theme="{ algorithm: currentTheme }">
+    <themeToggle @changeMode="val=>currentTheme=val"/>
+    <a-typography-title style="margin-top: 20px;text-align: center">todo-list</a-typography-title>
+    <div style="padding: 24px; max-width: 480px; margin: auto;">
 
-        <a-button type="primary" @click="addTodo">添加</a-button>
+      <TodoInput @add="addTodo" />
+      <todoList
+        :todos="todos"
+        @toggle="toggleCompleted"
+        @remove="removeTodo"
+      />
+      <div style="margin-top: 16px;">
+        已完成任务：{{ completedCount }}
       </div>
-      <ul class="todoList">
-        <li v-for="(item,index) of todos" :key="index" :class="{done:item.completed}">
-          <a-checkbox v-model:checked="item.completed">完成</a-checkbox>
-          <span>{{item.text}}</span>
-          <a-button @click="deleteTodo(index)">删除</a-button>
-        </li>
-      </ul>
-      <p class="status">
-        completed:{{completeCount}} / {{todos.length}}
-      </p>
-    </a-typography>
+    </div>
   </a-config-provider>
 
 </template>
 
 
 <style scoped>
-.container {
-  max-width: 80%;
-  margin: 50px auto;
-  padding: 20px;
-  font-family: 'Helvetica Neue', sans-serif;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-  background: linear-gradient(to right,white,grey);
-}
-
-h1 {
-  text-align: center;
-  color: #333;
-}
-.inputArea {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
 
 input[type="text"] {
   flex: 1;
@@ -88,10 +57,6 @@ input[type="text"] {
   font-size: 14px;
 }
 
-.todoList {
-  list-style: none;
-  padding: 0;
-}
 
 .todoList li {
   display: flex;
@@ -106,10 +71,4 @@ input[type="text"] {
   color: #888;
 }
 
-.status {
-  text-align: center;
-  margin-top: 15px;
-  font-size: 20px;
-  color: #666;
-}
 </style>
